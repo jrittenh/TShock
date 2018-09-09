@@ -1,0 +1,36 @@
+#!/sbin/openrc-run
+
+description="Terraria tshock world daemon"
+name="${RC_SVCNAME}"
+world="${world:-${name##*.}}"
+rootpath="${rootpath:-/opt/terraria}"
+worldpath="${WORLD_PATH:-${rootpath}/worlds}"
+logpath="${LOG_PATH:-${rootpath}/log}"
+configpath="${CONFIG_PATH:-${rootpath}/config}"
+config_ini="${world}.ini"
+use_config=$(if [ -f ${rootpath}/conf/${config_ini} ] ; then echo -config ${rootpath}/conf/${config_ini}; fi)
+if [ "${use_config}" == "" ] ; then
+    port="-port ${PORT:-7777}"
+    worldfile="-world ${WORLD:-${worldpath}/${world}.wld}"
+    use_config="${port} ${worldfile}"
+fi
+
+pidfile="/var/run/${name}.pid"
+command="/usr/bin/mono"
+command_args="${rootpath}/tshock/TerrariaServer.exe"
+command_args="${command_args} ${use_config}"
+command_args="${command_args} -worldpath ${worldpath}"
+command_args="${command_args} -configpath ${configpath}"
+command_args="${command_args} -logpath ${logpath}"
+
+depend() {
+    need net
+}
+
+start_pre() {
+    cd ${rootpath}
+    echo $world
+    echo $use_config
+    echo $command_args
+    return 0
+}
